@@ -1,12 +1,8 @@
 /*
  * Simple Hashmap Implementation in C
  *
- * TODO:
- * - test implementation exaustively
- * - add support for trees when hash collision
- * - add dynamic resizing
- * - add and enable more types for hash values
- * Pedro Ângelo
+ * Author: Pedro Ângelo
+ * Date: September 2016
  */
 
 // INCLUDES
@@ -54,18 +50,49 @@ void statistics_ht(hashtable_t *hashtable) {
 	printf("\n### HASHTABLE ENTRIES ###\n\n");
 	printf("SIZE: %d ENTRIES\n", size);
 
-	entry_t current;
-	int current_size;
+	entry_t entry;
+	int entry_size;
 	for(i=0;i<size;i++) {
-		current = hashtable->entries[i];
-		current_size = current.size;
-		printf("ENTRY %d: %d BUCKETS\n", i, current_size);
-		num_buckets += current_size;
-		if(current_size != 0) used_entries++;
+		entry = hashtable->entries[i];
+		entry_size = entry.size;
+		printf("ENTRY %d: %d BUCKETS\n", i, entry_size);
+		num_buckets += entry_size;
+		if(entry_size != 0) used_entries++;
 	}
 	printf("\n### HASHTABLE STATISTICS ###\n");
 	printf("USED %d ENTRIES\n", used_entries);
 	printf("USED %d BUCKETS\n", num_buckets);
+}
+
+// show snapshot of hashtable
+void snapshot_ht(hashtable_t *hashtable) {
+
+	int i, j;
+	int size = hashtable->size;
+
+	printf("\n### HASHTABLE SNAPSHOT ###\n\n");
+
+	entry_t *entry;
+	bucket_t *bucket;
+	int entry_size;
+	for(i=0;i<size;i++) {
+		entry = (entry_t *) &hashtable->entries[i];
+		entry_size = entry->size;
+		bucket = (bucket_t *) entry->first_bucket;
+		printf("[ENTRY %d] :: ", i);
+		if(entry_size != 0) {
+			printf("FIRST (%s, %s) | ", entry->first_bucket->key, entry->first_bucket->value);
+			printf("LAST (%s, %s) | ", entry->last_bucket->key, entry->last_bucket->value);
+		} else {
+			printf("FIRST (NULL, NULL) | ");
+			printf("LAST (NULL, NULL) | ");
+		}
+		for(j=0; j<entry_size;j++) {
+			if(j!=0) bucket = (bucket_t *) bucket->next;
+			printf("(%s, %s) -> ", bucket->key, bucket->value);
+		}
+		printf("NULL\n");
+	}
 }
 
 // deallocates the space used by the hash table
@@ -155,10 +182,28 @@ char *remove_ht(hashtable_t *hashtable, char *key) {
 		if(strcmp(current_bucket->key, key) == 0) {
 			// store value
 			char* value = current_bucket->value;
-			// if first bucket; set first bucket to next bucket
-			if(i==0) entry->first_bucket = (bucket_t *) current_bucket->next;
-			// if last bucket; set last bucket to previous bucket
-			else if(i == entry->size -1) entry->last_bucket = (bucket_t *) &previous_bucket;
+
+			// update entry pointers and next bucket pointer
+
+			// entry only has one bucket
+			if(entry->size == 1) {
+				entry->first_bucket = NULL;
+				entry->last_bucket = NULL;
+			}
+
+			// entry has more than one bucket
+			else {
+				// removing first bucket, set first bucket to next bucket
+				if(i == 0) entry->first_bucket = (bucket_t *) current_bucket->next;
+				// removing last bucket
+				if(i == entry->size-1) {
+					entry->last_bucket = (bucket_t *) previous_bucket;
+					previous_bucket->next = NULL;
+				}
+				// removing bucket that isn't first or last bucket, , update pointer to next bucket
+				if(i != 0 && i != entry->size-1) previous_bucket->next = current_bucket->next;
+			}
+
 			// free current bucket
 			free(current_bucket);
 			// decrement counter
@@ -212,6 +257,7 @@ bucket_t *create_bucket(char *key, char *value) {
 }
 
 // HASH FUNCTIONS DEFINITIONS
+
 uint32_t jenkins_one_at_a_time_hash(char *key, size_t len) {
     uint32_t hash, i;
     for(hash = i = 0; i < len; ++i) {

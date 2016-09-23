@@ -1,6 +1,7 @@
 // INCLUDES
 #include <stdint.h>
 #include <stdlib.h>
+
 // STRUCTURES
 
 // hashtable bucket:
@@ -39,10 +40,8 @@ char* 			retrieve_ht(hashtable_t *hashtable, char *key);
 char* 			remove_ht(hashtable_t *hashtable, char *key);
 
 // AUXILIARY FUNCTIONS DECLARATIONS
-
 static int 			delete_entry(entry_t *entry);
 static bucket_t*	create_bucket(char *key, char *value);
 
 // HASH FUNCTIONS DECLARATIONS
-
 static uint32_t 	jenkins_one_at_a_time_hash(char *key, size_t len);
