@@ -39,6 +39,7 @@ typedef struct _hashtable_t {
 // MAIN FUNCTIONS DECLARATIONS
 hashtable_t*	create_ht(int size, float load_factor);
 void 			statistics_ht(hashtable_t *hashtable);
+void 			snapshot_ht(hashtable_t *hashtable);
 void 			delete_ht(hashtable_t *hashtable);
 void 			insert_ht(hashtable_t *hashtable, char *key, char *value);
 char* 			retrieve_ht(hashtable_t *hashtable, char *key);
