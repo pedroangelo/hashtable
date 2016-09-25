@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 #include <string.h>
-
+#include <stdbool.h>
 // MACROS
 
 // GLOBAL VARIABLES
@@ -18,23 +18,25 @@
 // MAIN FUNCTIONS DEFINITIONS
 
 // create a empty hashtable and return the address
-hashtable_t *create_ht(int size) {
+hashtable_t *create_ht(int size, float load_factor) {
 
 	int i;
 	// allocate space for the hashtable
 	hashtable_t *hashtable = malloc(sizeof(hashtable_t));
 	// set hashtable size
 	hashtable->size = size;
+	// set current number of buckets
+	hashtable->num_buckets = 0;
+	// set hashtable load factor
+	hashtable->load_factor = load_factor;
 	// create array of buckets
 	hashtable->entries = malloc(size * sizeof(entry_t));
 
-	entry_t current_entry;
 	// initialize entries
 	for(i=0;i<size;i++) {
-		current_entry = hashtable->entries[i];
-		current_entry.size = 0;
-		current_entry.first_bucket = NULL;
-		current_entry.last_bucket = NULL;
+		hashtable->entries[i].size = 0;
+		hashtable->entries[i].first_bucket = (bucket_t *) NULL;
+		hashtable->entries[i].last_bucket = (bucket_t *) NULL;
 	}
 	return hashtable;
 }
@@ -44,24 +46,16 @@ void statistics_ht(hashtable_t *hashtable) {
 
 	int i;
 	int used_entries = 0;
-	int num_buckets = 0;
 	int size = hashtable->size;
-
-	printf("\n### HASHTABLE ENTRIES ###\n\n");
-	printf("SIZE: %d ENTRIES\n", size);
 
 	entry_t entry;
 	int entry_size;
-	for(i=0;i<size;i++) {
-		entry = hashtable->entries[i];
-		entry_size = entry.size;
-		printf("ENTRY %d: %d BUCKETS\n", i, entry_size);
-		num_buckets += entry_size;
-		if(entry_size != 0) used_entries++;
-	}
-	printf("\n### HASHTABLE STATISTICS ###\n");
-	printf("USED %d ENTRIES\n", used_entries);
-	printf("USED %d BUCKETS\n", num_buckets);
+	for(i=0;i<size;i++) if(hashtable->entries[i].size != 0) used_entries++;
+
+	printf("\n### HASHTABLE STATISTICS ###\n\n");
+	printf("ENTRIES: %d USED / %d TOTAL\n", used_entries, size);
+	printf("BUCKETS: %d\n", hashtable->num_buckets);
+	printf("LOAD FACTOR: %f\n", hashtable->load_factor);
 }
 
 // show snapshot of hashtable
@@ -71,6 +65,7 @@ void snapshot_ht(hashtable_t *hashtable) {
 	int size = hashtable->size;
 
 	printf("\n### HASHTABLE SNAPSHOT ###\n\n");
+	printf("[ENTRY #] (size, first key, last key) :: (bucket list)\n");
 
 	entry_t *entry;
 	bucket_t *bucket;
@@ -79,17 +74,16 @@ void snapshot_ht(hashtable_t *hashtable) {
 		entry = (entry_t *) &hashtable->entries[i];
 		entry_size = entry->size;
 		bucket = (bucket_t *) entry->first_bucket;
-		printf("[ENTRY %d] :: ", i);
+		printf("[ENTRY %d] ", i);
 		if(entry_size != 0) {
-			printf("FIRST (%s, %s) | ", entry->first_bucket->key, entry->first_bucket->value);
-			printf("LAST (%s, %s) | ", entry->last_bucket->key, entry->last_bucket->value);
+			printf("(%d, %s, %s) ", entry->size, entry->first_bucket->key, entry->last_bucket->key);
 		} else {
-			printf("FIRST (NULL, NULL) | ");
-			printf("LAST (NULL, NULL) | ");
+			printf("(0, NULL, NULL) ");
 		}
+		printf(":: ");
 		for(j=0; j<entry_size;j++) {
 			if(j!=0) bucket = (bucket_t *) bucket->next;
-			printf("(%s, %s) -> ", bucket->key, bucket->value);
+			printf("(%s, %s) --> ", bucket->key, bucket->value);
 		}
 		printf("NULL\n");
 	}
@@ -98,16 +92,8 @@ void snapshot_ht(hashtable_t *hashtable) {
 // deallocates the space used by the hash table
 void delete_ht(hashtable_t *hashtable) {
 
-	int i, freed_buckets = 0;
-	// get size of hashtable
-	int size = hashtable->size;
-	// for each hashtable entry
-	for(i=0;i<size;i++) {
-		// free all entries
-		freed_buckets += delete_entry(&hashtable->entries[i]);
-	}
-	// free list of entries
-	free(hashtable->entries);
+	// free entries
+	deallocate_entries(hashtable->entries, hashtable->size);
 	// free hashtable
 	free(hashtable);
 
@@ -117,6 +103,9 @@ void delete_ht(hashtable_t *hashtable) {
 
 // insert (key, value) pair in hash
 void insert_ht(hashtable_t *hashtable, char *key, char *value) {
+
+	// check if key already exists, if so do nothing
+	if(check_key(hashtable, key) == true) return;
 
 	// get new bucket
 	bucket_t *new_bucket = create_bucket(key, value);
@@ -140,8 +129,15 @@ void insert_ht(hashtable_t *hashtable, char *key, char *value) {
 		// point entry's last bucket to new bucket
 		entry->last_bucket = new_bucket;
 	}
-	// increment counter
+	// increment counters
 	entry->size++;
+	hashtable->num_buckets++;
+
+	// check if hashtable needs resizing
+	if(hashtable->num_buckets >= hashtable->size * hashtable->load_factor) {
+		// resize hashtable
+		resize_ht(hashtable, hashtable->size*2);
+	}
 }
 
 // retrieve value given the key
@@ -206,8 +202,9 @@ char *remove_ht(hashtable_t *hashtable, char *key) {
 
 			// free current bucket
 			free(current_bucket);
-			// decrement counter
+			// decrement counters
 			entry->size--;
+			hashtable->num_buckets--;
 			// return value;
 			return value;
 		}
@@ -216,6 +213,57 @@ char *remove_ht(hashtable_t *hashtable, char *key) {
 		if(i!=0) previous_bucket = (bucket_t *) previous_bucket->next;
 	}
 	return NULL;
+}
+
+// resize hashtable
+void resize_ht(hashtable_t *hashtable, int size) {
+
+	int i, j;
+
+	// get old size
+	int old_size = hashtable->size;
+
+	// create new entry table
+	entry_t *new_entries = malloc(size * sizeof(entry_t));
+
+	// old entry table
+	entry_t *old_entries = hashtable->entries;
+
+	// initialize entries
+	for(i=0;i<size;i++) {
+		new_entries[i].size = 0;
+		new_entries[i].first_bucket = (bucket_t *) NULL;
+		new_entries[i].last_bucket = (bucket_t *) NULL;
+	}
+
+	// change hashtable variables
+	hashtable->size = size;
+	hashtable->entries = new_entries;
+	hashtable->num_buckets = 0;
+
+	// temporary variables
+	entry_t current_entry;
+	bucket_t *current_bucket;
+
+	// re-hash all buckets to new
+	// for each entry
+	for(i=0;i<old_size;i++) {
+
+		// get entry from entry list
+		current_entry = old_entries[i];
+		// get first bucket
+		current_bucket = current_entry.first_bucket;
+		// for each bucket in entry
+		for(j=0;j<current_entry.size;j++) {
+			// insert (key, value) pair in new hashtable
+			insert_ht(hashtable, (char *) current_bucket->key, (char *) current_bucket->value);
+			// iterate to next bucket
+			current_bucket = (bucket_t *) current_bucket->next;
+		}
+	}
+
+	// deallocate old entry list
+	deallocate_entries(old_entries, old_size);
 }
 
 // AUXILIARY FUNCTIONS DEFINITIONS
@@ -254,6 +302,28 @@ bucket_t *create_bucket(char *key, char *value) {
 	new_bucket->value = strdup(value);
 	new_bucket->next = NULL;
 	return new_bucket;
+}
+
+// check if key exists
+bool check_key(hashtable_t *hashtable, char *key) {
+	// get value for key
+	char *value = retrieve_ht(hashtable, key);
+	if(value == NULL) return false;
+	return true;
+
+}
+
+// deallocate all entries and free used space
+void deallocate_entries(entry_t *entries, int size) {
+
+	int i, freed_buckets = 0;
+	// for each hashtable entry
+	for(i=0;i<size;i++) {
+		// free all entries
+		freed_buckets += delete_entry(&entries[i]);
+	}
+	// free list of entries
+	free(entries);
 }
 
 // HASH FUNCTIONS DEFINITIONS
