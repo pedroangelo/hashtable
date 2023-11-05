@@ -1,0 +1,4 @@
+#+TITLE: hashtable
+#+AUTHOR: Pedro Ângelo
+
+Simple hashtable implementation
