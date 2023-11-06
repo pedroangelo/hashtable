@@ -4,11 +4,12 @@
 List of tasks to improve hashtable
 
 ** TODO Tasks
-- global variable to turn on and off messages, such as when the hash table is resized, when a colision occurs, etc
+- turn messages on and off via function arguments (messages when the hash table is resized, when a colision occurs, etc)
 - change hash function to a simpler one
 - check c coding conventions and style, and update
 - implement different ways to handle colisions:
   - separate chaining
   - open addressing, with either double hashing, linear probing or quadratic probing
+  - the user can choose what of these the hashtable implements by passing a argument
 - test implementation exaustively, usign valgrind and well as unit tests
 - add and enable more types for hash values
