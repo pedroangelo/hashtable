@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
-	hashtable_t *hashtable = create_ht(1, 0.75);
+	hashtable_t *hashtable = create_ht(1, 0.1, 0.75);
 
 	char *alphabet = "abcdefghijklmnopqrstuvwxyz";
 	insert_ht(hashtable, "a", "a");

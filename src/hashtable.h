@@ -27,30 +27,32 @@ typedef struct _entry_t {
 // hashtable representation contains:
 // - size: size of hashtable
 // - num_buckets: number of allocated buckets
-// - load factor: threshold at which hashtable size is doubled
-// - entry: pointer to list of entries
+// - min_load_factor: threshold at which hashtable size is halved
+// - max_load_factor: threshold at which hashtable size is doubled
+// - entries: pointer to list of entries
 typedef struct _hashtable_t {
 	int size;
 	int num_buckets;
-	float load_factor;
+	float min_load_factor;
+  float max_load_factor;
 	entry_t *entries;
 } hashtable_t;
 
 // MAIN FUNCTIONS DECLARATIONS
-hashtable_t*	create_ht(int size, float load_factor);
-void 			statistics_ht(hashtable_t *hashtable);
-void 			snapshot_ht(hashtable_t *hashtable);
-void 			delete_ht(hashtable_t *hashtable);
-void 			insert_ht(hashtable_t *hashtable, char *key, char *value);
-char* 			retrieve_ht(hashtable_t *hashtable, char *key);
-char* 			remove_ht(hashtable_t *hashtable, char *key);
-void			resize_ht(hashtable_t *hashtable, int size);
+hashtable_t* create_ht(int size, float min_load_factor, float max_load_factor);
+void statistics_ht(hashtable_t *hashtable);
+void snapshot_ht(hashtable_t *hashtable);
+void delete_ht(hashtable_t *hashtable);
+void insert_ht(hashtable_t *hashtable, char *key, char *value);
+char* retrieve_ht(hashtable_t *hashtable, char *key);
+char* remove_ht(hashtable_t *hashtable, char *key);
+void resize_ht(hashtable_t *hashtable, int size);
 
 // AUXILIARY FUNCTIONS DECLARATIONS
-static int 			delete_entry(entry_t *entry);
-static bucket_t*	create_bucket(char *key, char *value);
-static bool 		check_key(hashtable_t *hashtable, char *key);
-static void			deallocate_entries(entry_t *entries, int size);
+static int delete_entry(entry_t *entry);
+static bucket_t* create_bucket(char *key, char *value);
+static bool check_key(hashtable_t *hashtable, char *key);
+static void	deallocate_entries(entry_t *entries, int size);
 
 // HASH FUNCTIONS DECLARATIONS
-static uint32_t 	jenkins_one_at_a_time_hash(char *key, size_t len);
+static uint32_t jenkins_one_at_a_time_hash(char *key, size_t len);
