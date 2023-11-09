@@ -4,13 +4,17 @@
 List of tasks to improve hashtable
 
 ** TODO Tasks
-- verify inputs, such as hashtable size, and if min_load_factor is lesser than max_load_factor
 - test with valgrind again, some errors remained when downsizing
+- add verification of inputs
+  - hashtable size must be larger than 1
+  - min_load_factor must be lesser than max_load_factor
 - change hash function to a simpler one
 - check c coding conventions and style, and update
 - implement different ways to handle colisions:
   - separate chaining
-  - open addressing, with either double hashing, linear probing or quadratic probing
+  - open addressing, with either double hashing, linear probing or quadratic probing.
+    In this case, the data structures can remain as they are, and all entries will only exactly one bucket.
   - the user can choose what of these the hashtable implements by passing a argument
+    enum CollisionResolution { SC, OALP, OAQP, OADH };
 - test implementation exaustively, usign valgrind and well as unit tests
 - add and enable more types for hash values
