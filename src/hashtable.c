@@ -234,6 +234,12 @@ char *remove_ht(hashtable_t *hashtable, char *key) {
 
       // print status messages
       if (hashtable->enable_feedback) printf("Hashtable removal successful: value %s for key %s removed\n", value, key);
+
+      // check if hashtable needs resizing
+      if(hashtable->num_buckets <= hashtable->size * hashtable->min_load_factor) {
+        // resize hashtable
+        resize_ht(hashtable, hashtable->size / 2);
+      }
       
       // return value;
       return value;
@@ -241,12 +247,6 @@ char *remove_ht(hashtable_t *hashtable, char *key) {
     // place next bucket in current_bucket
     current_bucket = (bucket_t *) current_bucket->next;
     if(i!=0) previous_bucket = (bucket_t *) previous_bucket->next;
-  }
-
-  // check if hashtable needs resizing
-  if(hashtable->num_buckets <= hashtable->size * hashtable->min_load_factor) {
-    // resize hashtable
-    resize_ht(hashtable, hashtable->size / 2);
   }
 
   // print status messages
