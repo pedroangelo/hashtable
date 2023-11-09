@@ -2,10 +2,11 @@
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
-	hashtable_t *hashtable = create_ht(1, 0.1, 0.75);
+	hashtable_t *hashtable = create_ht(1, 0.1, 0.75, true);
 
 	char *alphabet = "abcdefghijklmnopqrstuvwxyz";
 	insert_ht(hashtable, "a", "a");
+  insert_ht(hashtable, "a", "a");
 	insert_ht(hashtable, "b", "b");
 	insert_ht(hashtable, "c", "c");
 	insert_ht(hashtable, "d", "d");
@@ -31,8 +32,10 @@ int main(int argc, char *argv[]) {
 	insert_ht(hashtable, "x", "x");
 	insert_ht(hashtable, "y", "y");
 	insert_ht(hashtable, "z", "z");
+  remove_ht(hashtable, "a");
+  remove_ht(hashtable, "a");
 	statistics_ht(hashtable);
-	snapshot_ht(hashtable);
+	// snapshot_ht(hashtable);
 	delete_ht(hashtable);
 	return 1;
 }

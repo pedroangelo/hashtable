@@ -19,7 +19,7 @@
 // MAIN FUNCTIONS DEFINITIONS
 
 // create a empty hashtable and return the address
-hashtable_t *create_ht(int size, float min_load_factor, float max_load_factor) {
+hashtable_t *create_ht(int size, float min_load_factor, float max_load_factor, bool enable_feedback) {
   
 	int i;
 	// allocate space for the hashtable
@@ -32,6 +32,8 @@ hashtable_t *create_ht(int size, float min_load_factor, float max_load_factor) {
 	hashtable->min_load_factor = min_load_factor;
   // set hashtable max load factor
 	hashtable->max_load_factor = max_load_factor;
+  // set hashtable enable_feedback variable
+  hashtable->enable_feedback = enable_feedback;
 	// create array of buckets
 	hashtable->entries = malloc(size * sizeof(entry_t));
 
@@ -41,6 +43,10 @@ hashtable_t *create_ht(int size, float min_load_factor, float max_load_factor) {
 		hashtable->entries[i].first_bucket = (bucket_t *) NULL;
 		hashtable->entries[i].last_bucket = (bucket_t *) NULL;
 	}
+
+  // print status messages
+  if (enable_feedback) printf("Hashtable creation successful: with size %d and %.0f%% min / %.0f%% max load limits\n", size, (100 * hashtable->min_load_factor), (100 * hashtable->max_load_factor));
+  
 	return hashtable;
 }
 
@@ -55,7 +61,7 @@ void statistics_ht(hashtable_t *hashtable) {
 	int entry_size;
 	for(i=0;i<size;i++) if(hashtable->entries[i].size != 0) used_entries++;
 
-  printf("Hashtable Statistics\n");
+  printf("Printing hashtable statistics\n");
   printf("Load limits: %.0f%% min / %.0f%% max\n", (100 * hashtable->min_load_factor), (100 * hashtable->max_load_factor));
   printf("Buckets: %d used (stored in %d entries) / %d total (%.0f%% current load)\n", hashtable->num_buckets, used_entries, size, 100 * (double) ((double) hashtable->num_buckets / size));
 }
@@ -66,7 +72,7 @@ void snapshot_ht(hashtable_t *hashtable) {
   int i, j;
   int size = hashtable->size;
 
-  printf("Hashtable Snapshot\n");
+  printf("Printing hashtable snapshot\n");
   printf("[entry #] (size, first key, last key) :: (bucket list)\n");
   printf("------------------------------------------------------\n");
 
@@ -96,18 +102,24 @@ void snapshot_ht(hashtable_t *hashtable) {
 void delete_ht(hashtable_t *hashtable) {
 
   // free entries
-  deallocate_entries(hashtable->entries, hashtable->size);
+  int freed_buckets = deallocate_entries(hashtable->entries, hashtable->size);
   // free hashtable
   free(hashtable);
 
-  // printf("Deleting hashtable, used buckets freed: %d\n", freed_buckets);
+  // print status messages
+  if (hashtable->enable_feedback) printf("Hashtable deletion successful: %d buckets freed\n", freed_buckets);
 }
 
 // insert (key, value) pair in hash
 void insert_ht(hashtable_t *hashtable, char *key, char *value) {
 
   // check if key already exists, if so do nothing
-  if(check_key(hashtable, key) == true) return;
+  if(check_key(hashtable, key) == true) {
+    // print status messages
+    if (hashtable->enable_feedback) printf("Hashtable insertion failed: key %s already in use\n", key);
+    
+    return;
+  }
 
   // get new bucket
   bucket_t *new_bucket = create_bucket(key, value);
@@ -135,11 +147,11 @@ void insert_ht(hashtable_t *hashtable, char *key, char *value) {
   entry->size++;
   hashtable->num_buckets++;
 
+  // print status messages
+  if (hashtable->enable_feedback) printf("Hashtable insertion successful: pair (%s, %s) inserted\n", key, value);
+  
   // check if hashtable needs resizing
-  if(hashtable->num_buckets >= hashtable->size * hashtable->max_load_factor) {
-    // resize hashtable
-    resize_ht(hashtable, hashtable->size*2);
-  }
+  if(hashtable->num_buckets >= hashtable->size * hashtable->max_load_factor) resize_ht(hashtable, hashtable->size*2);
 }
 
 // retrieve value given the key
@@ -156,10 +168,20 @@ char *retrieve_ht(hashtable_t *hashtable, char *key) {
   // search for key
   for(i=0;i<entry->size;i++) {
     // if keys match, return value
-    if(strcmp(current_bucket->key, key) == 0) return current_bucket->value;
+    if(strcmp(current_bucket->key, key) == 0) {
+
+      // print status messages
+      if (hashtable->enable_feedback) printf("Hashtable retrieval successful: value %s for key %s retrived\n", current_bucket->value, key);
+      
+      return current_bucket->value;
+    }
     // place next bucket in current_bucket
     current_bucket = (bucket_t *) current_bucket->next;
   }
+  
+  // print status messages
+  if (hashtable->enable_feedback) printf("Hashtable retrieval failed: no value for key %s\n", key);
+  
   return NULL;
 }
 
@@ -209,6 +231,10 @@ char *remove_ht(hashtable_t *hashtable, char *key) {
       // decrement counters
       entry->size--;
       hashtable->num_buckets--;
+
+      // print status messages
+      if (hashtable->enable_feedback) printf("Hashtable removal successful: value %s for key %s removed\n", value, key);
+      
       // return value;
       return value;
     }
@@ -222,6 +248,10 @@ char *remove_ht(hashtable_t *hashtable, char *key) {
     // resize hashtable
     resize_ht(hashtable, hashtable->size / 2);
   }
+
+  // print status messages
+  if (hashtable->enable_feedback) printf("Hashtable removal failed: no value for key %s\n", key);
+  
   return NULL;
 }
 
@@ -255,6 +285,10 @@ void resize_ht(hashtable_t *hashtable, int size) {
   entry_t current_entry;
   bucket_t *current_bucket;
 
+  bool enable_feedback = hashtable->enable_feedback;
+  // temporarily disable feedback
+  hashtable->enable_feedback = false;
+
   // re-hash all buckets to new
   // for each entry
   for(i=0;i<old_size;i++) {
@@ -274,6 +308,13 @@ void resize_ht(hashtable_t *hashtable, int size) {
 
   // deallocate old entry list
   deallocate_entries(old_entries, old_size);
+  
+  // restore feedback
+  hashtable->enable_feedback = enable_feedback;
+  // print status messages
+  if (hashtable->enable_feedback) {
+    printf("Hashtable successfully resized: from size %d to size %d\n", old_size, size);
+  }
 }
 
 // AUXILIARY FUNCTIONS DEFINITIONS
@@ -316,14 +357,23 @@ bucket_t *create_bucket(char *key, char *value) {
 
 // check if key exists
 bool check_key(hashtable_t *hashtable, char *key) {
+
+  bool enable_feedback = hashtable->enable_feedback;
+  // temporarily disable feedback
+  hashtable->enable_feedback = false;
+  
   // get value for key
   char *value = retrieve_ht(hashtable, key);
-  if(value == NULL) return false;
+
+  // restore feedback
+  hashtable->enable_feedback = enable_feedback;
+  
+  if (value == NULL) return false;
   return true;
 }
 
 // deallocate all entries and free used space
-void deallocate_entries(entry_t *entries, int size) {
+int deallocate_entries(entry_t *entries, int size) {
 
   int i, freed_buckets = 0;
   // for each hashtable entry
@@ -333,6 +383,8 @@ void deallocate_entries(entry_t *entries, int size) {
   }
   // free list of entries
   free(entries);
+
+  return freed_buckets;
 }
 
 // HASH FUNCTIONS DEFINITIONS

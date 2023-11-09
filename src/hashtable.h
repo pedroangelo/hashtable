@@ -29,17 +29,19 @@ typedef struct _entry_t {
 // - num_buckets: number of allocated buckets
 // - min_load_factor: threshold at which hashtable size is halved
 // - max_load_factor: threshold at which hashtable size is doubled
+// - enable_feedback: set to true to print status messages
 // - entries: pointer to list of entries
 typedef struct _hashtable_t {
 	int size;
 	int num_buckets;
 	float min_load_factor;
   float max_load_factor;
+  bool enable_feedback;
 	entry_t *entries;
 } hashtable_t;
 
 // MAIN FUNCTIONS DECLARATIONS
-hashtable_t* create_ht(int size, float min_load_factor, float max_load_factor);
+hashtable_t* create_ht(int size, float min_load_factor, float max_load_factor, bool enable_feedback);
 void statistics_ht(hashtable_t *hashtable);
 void snapshot_ht(hashtable_t *hashtable);
 void delete_ht(hashtable_t *hashtable);
@@ -52,7 +54,7 @@ void resize_ht(hashtable_t *hashtable, int size);
 static int delete_entry(entry_t *entry);
 static bucket_t* create_bucket(char *key, char *value);
 static bool check_key(hashtable_t *hashtable, char *key);
-static void	deallocate_entries(entry_t *entries, int size);
+static int	deallocate_entries(entry_t *entries, int size);
 
 // HASH FUNCTIONS DECLARATIONS
 static uint32_t jenkins_one_at_a_time_hash(char *key, size_t len);
