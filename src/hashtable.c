@@ -34,15 +34,11 @@ hashtable_t *create_ht(int size, float min_load_factor, float max_load_factor, b
 	hashtable->max_load_factor = max_load_factor;
   // set hashtable enable_feedback variable
   hashtable->enable_feedback = enable_feedback;
-	// create array of buckets
-	hashtable->entries = malloc(size * sizeof(entry_t));
+	// create entries, i.e. array of pointers to buckets
+	hashtable->entries = malloc(size * sizeof(bucket_t));
 
-	// initialize entries
-	for(i=0;i<size;i++) {
-		hashtable->entries[i].size = 0;
-		hashtable->entries[i].first_bucket = (bucket_t *) NULL;
-		hashtable->entries[i].last_bucket = (bucket_t *) NULL;
-	}
+  // initialize entries
+	for(i=0;i<size;i++) hashtable->entries[i] = (bucket_t *) NULL;
 
   // print status messages
   if (enable_feedback) printf("Hashtable creation successful: with size %d and %.0f%% min / %.0f%% max load limits\n", size, (100 * hashtable->min_load_factor), (100 * hashtable->max_load_factor));
@@ -50,101 +46,56 @@ hashtable_t *create_ht(int size, float min_load_factor, float max_load_factor, b
 	return hashtable;
 }
 
-// collect statistics from hashtable
-void statistics_ht(hashtable_t *hashtable) {
-
-	int i;
-	int used_entries = 0;
-	int size = hashtable->size;
-
-	entry_t entry;
-	int entry_size;
-	for(i=0;i<size;i++) if(hashtable->entries[i].size != 0) used_entries++;
-
-  printf("Printing hashtable statistics\n");
-  printf("Load limits: %.0f%% min / %.0f%% max\n", (100 * hashtable->min_load_factor), (100 * hashtable->max_load_factor));
-  printf("Buckets: %d used (stored in %d entries) / %d total (%.0f%% current load)\n", hashtable->num_buckets, used_entries, size, 100 * (double) ((double) hashtable->num_buckets / size));
-}
-
-// show snapshot of hashtable
-void snapshot_ht(hashtable_t *hashtable) {
-
-  int i, j;
-  int size = hashtable->size;
-
-  printf("Printing hashtable snapshot\n");
-  printf("[entry #] (size, first key, last key) :: (bucket list)\n");
-  printf("------------------------------------------------------\n");
-
-  entry_t *entry;
-  bucket_t *bucket;
-  int entry_size;
-  for(i=0;i<size;i++) {
-    entry = (entry_t *) &hashtable->entries[i];
-    entry_size = entry->size;
-    bucket = (bucket_t *) entry->first_bucket;
-    printf("[entry %d] ", i);
-    if(entry_size != 0) {
-      printf("(%d, %s, %s) ", entry->size, entry->first_bucket->key, entry->last_bucket->key);
-    } else {
-      printf("(0, null, null) ");
-    }
-    printf(":: ");
-    for(j=0; j<entry_size;j++) {
-      if(j!=0) bucket = (bucket_t *) bucket->next;
-      printf("(%s, %s) --> ", bucket->key, bucket->value);
-    }
-    printf("null\n");
-  }
-}
-
 // deallocates the space used by the hash table
 void delete_ht(hashtable_t *hashtable) {
 
   // free entries
-  int freed_buckets = deallocate_entries(hashtable->entries, hashtable->size);
-  // free hashtable
-  free(hashtable);
+  int freed_buckets = deallocate_all_entries(hashtable->entries, hashtable->size);
 
   // print status messages
   if (hashtable->enable_feedback) printf("Hashtable deletion successful: %d buckets freed\n", freed_buckets);
+
+  // free hashtable
+  free(hashtable);
 }
+
+/*
 
 // insert (key, value) pair in hash
 void insert_ht(hashtable_t *hashtable, char *key, char *value) {
 
-  // check if key already exists, if so do nothing
-  if(check_key(hashtable, key) == true) {
-    // print status messages
-    if (hashtable->enable_feedback) printf("Hashtable insertion failed: key %s already in use\n", key);
+// check if key already exists, if so do nothing
+if(check_key(hashtable, key) == true) {
+// print status messages
+if (hashtable->enable_feedback) printf("Hashtable insertion failed: key %s already in use\n", key);
     
-    return;
-  }
+return;
+}
 
-  // get new bucket
-  bucket_t *new_bucket = create_bucket(key, value);
-  // get hash value of key
-  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
-  // get index from hash
-  int index = hash % hashtable->size;
-  // get entry in index position
-  entry_t *entry = &hashtable->entries[index];
-  // if there is no bucket in entry
-  if(entry->size == 0) {
-    entry->first_bucket = new_bucket;
-    entry->last_bucket = new_bucket;
+// get new bucket
+bucket_t *new_bucket = create_bucket(key, value);
+// get hash value of key
+uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
+// get index from hash
+int index = hash % hashtable->size;
+// get entry in index position
+entry_t *entry = &hashtable->entries[index];
+// if there is no bucket in entry
+if(entry->size == 0) {
+entry->first_bucket = new_bucket;
+entry->last_bucket = new_bucket;
 
-    // if there is a collision
-  } else {
-    // get last bucket
-    bucket_t *last = entry->last_bucket;
-    // point last bucket's next to new_bucket
-    last->next = (struct bucket_t *) new_bucket;
-    // point entry's last bucket to new bucket
-    entry->last_bucket = new_bucket;
-  }
-  // increment counters
-  entry->size++;
+// if there is a collision
+} else {
+// get last bucket
+bucket_t *last = entry->last_bucket;
+// point last bucket's next to new_bucket
+last->next = (struct bucket_t *) new_bucket;
+// point entry's last bucket to new bucket
+entry->last_bucket = new_bucket;
+}
+// increment counters
+entry->size++;
   hashtable->num_buckets++;
 
   // print status messages
@@ -316,22 +267,81 @@ void resize_ht(hashtable_t *hashtable, int size) {
     printf("Hashtable successfully resized: from size %d to size %d\n", old_size, size);
   }
 }
+*/
+
+// INFORMATIVE FUNCTIONS DEFINITIONS
+
+// collect statistics from hashtable
+void statistics_ht(hashtable_t* hashtable) {
+
+  printf("Printing hashtable statistics\n");
+  printf("Load limits: %.0f%% min / %.0f%% max\n", (100 * hashtable->min_load_factor), (100 * hashtable->max_load_factor));
+  printf("Buckets: %d used / %d total (%.0f%% current load)\n", hashtable->num_buckets, hashtable->size, 100 * (double) ((double) hashtable->num_buckets / hashtable->size));
+}
+
+// show snapshot of hashtable
+void snapshot_ht(hashtable_t* hashtable) {
+
+  int i, j;
+  int size = hashtable->size;
+
+  printf("Printing hashtable snapshot\n");
+  printf("[entry #] (first key, first value) --> ... --> (last key, last value)\n");
+  printf("-----------------------------------------------------------\n");
+
+  bucket_t* current_bucket;
+  for(i=0;i<size;i++) {
+    current_bucket = (bucket_t*) hashtable->entries[i];
+    printf("[entry %d] ", i);
+    while(current_bucket != NULL) {
+      printf("(%s, %s) --> ", current_bucket->key, current_bucket->value);
+      current_bucket = (bucket_t*) current_bucket->next;
+    }
+    printf("null\n");
+  }
+}
 
 // AUXILIARY FUNCTIONS DEFINITIONS
 
-// deallocates the space used by a entry and free all bucket under that entry
-int delete_entry(entry_t *entry) {
+// create new bucket
+bucket_t* create_bucket(char *key, char *value) {
 
-  int i, num_buckets = entry->size;
+  // allocate new bucket and set values
+  bucket_t* new_bucket = malloc(sizeof(bucket_t));
+  new_bucket->key = strdup(key);
+  new_bucket->value = strdup(value);
+  new_bucket->next = NULL;
+  return new_bucket;
+}
+
+// deallocate all entries and free used space
+int deallocate_all_entries(bucket_t** entries, int size) {
+
+  int i, freed_buckets = 0;
+  // for each hashtable entry
+  for(i=0;i<size;i++) {
+    bucket_t* bucket = entries[i];
+    // free all entries
+    freed_buckets += delete_buckets(bucket);
+  }
+  // free list of entries
+  free(entries);
+
+  return freed_buckets;
+}
+
+// deallocates the space used by a buckets and all those linked to it
+int delete_buckets(bucket_t* bucket) {
+
   int freed_buckets = 0;
-  // check if entry is empty
-  if(num_buckets != 0) {
 
-    bucket_t *current_bucket = entry->first_bucket;
+  // check if bucket is empty
+  if(bucket != NULL) {    
+    bucket_t* current_bucket = bucket;
     // traverse all buckets and free them
-    for(i=0;i<num_buckets;i++) {
+    while(current_bucket!=NULL) {
       // save next bucket
-      bucket_t *next = (bucket_t *) current_bucket->next;
+      bucket_t* next = (bucket_t *) current_bucket->next;
       // free current bucket
       free(current_bucket->key);
       free(current_bucket->value);
@@ -344,49 +354,24 @@ int delete_entry(entry_t *entry) {
   return freed_buckets;
 }
 
-// create new bucket
-bucket_t *create_bucket(char *key, char *value) {
-
-  // allocate new bucket and set values
-  bucket_t *new_bucket = malloc(sizeof(bucket_t));
-  new_bucket->key = strdup(key);
-  new_bucket->value = strdup(value);
-  new_bucket->next = NULL;
-  return new_bucket;
-}
-
+/*
 // check if key exists
 bool check_key(hashtable_t *hashtable, char *key) {
 
-  bool enable_feedback = hashtable->enable_feedback;
-  // temporarily disable feedback
-  hashtable->enable_feedback = false;
+bool enable_feedback = hashtable->enable_feedback;
+// temporarily disable feedback
+hashtable->enable_feedback = false;
   
-  // get value for key
-  char *value = retrieve_ht(hashtable, key);
+// get value for key
+char *value = retrieve_ht(hashtable, key);
 
-  // restore feedback
-  hashtable->enable_feedback = enable_feedback;
+// restore feedback
+hashtable->enable_feedback = enable_feedback;
   
-  if (value == NULL) return false;
-  return true;
+if (value == NULL) return false;
+return true;
 }
-
-// deallocate all entries and free used space
-int deallocate_entries(entry_t *entries, int size) {
-
-  int i, freed_buckets = 0;
-  // for each hashtable entry
-  for(i=0;i<size;i++) {
-    // free all entries
-    freed_buckets += delete_entry(&entries[i]);
-  }
-  // free list of entries
-  free(entries);
-
-  return freed_buckets;
-}
-
+*/
 // HASH FUNCTIONS DEFINITIONS
 
 uint32_t jenkins_one_at_a_time_hash(char *key, size_t len) {
