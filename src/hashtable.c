@@ -59,215 +59,212 @@ void delete_ht(hashtable_t *hashtable) {
   free(hashtable);
 }
 
-/*
+/* // insert (key, value) pair in hash */
+/* void insert_ht(hashtable_t *hashtable, char *key, char *value) { */
 
-// insert (key, value) pair in hash
-void insert_ht(hashtable_t *hashtable, char *key, char *value) {
-
-// check if key already exists, if so do nothing
-if(check_key(hashtable, key) == true) {
-// print status messages
-if (hashtable->enable_feedback) printf("Hashtable insertion failed: key %s already in use\n", key);
+/*   // check if key already exists, if so do nothing */
+/*   if(check_key(hashtable, key) == true) { */
+/*     // print status messages */
+/*     if (hashtable->enable_feedback) printf("Hashtable insertion failed: key %s already in use\n", key); */
     
-return;
-}
+/*     return; */
+/*   } */
 
-// get new bucket
-bucket_t *new_bucket = create_bucket(key, value);
-// get hash value of key
-uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
-// get index from hash
-int index = hash % hashtable->size;
-// get entry in index position
-entry_t *entry = &hashtable->entries[index];
-// if there is no bucket in entry
-if(entry->size == 0) {
-entry->first_bucket = new_bucket;
-entry->last_bucket = new_bucket;
+/*   // get new bucket */
+/*   bucket_t *new_bucket = create_bucket(key, value); */
+/*   // get hash value of key */
+/*   uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key)); */
+/*   // get index from hash */
+/*   int index = hash % hashtable->size; */
+/*   // get entry in index position */
+/*   entry_t *entry = &hashtable->entries[index]; */
+/*   // if there is no bucket in entry */
+/*   if(entry->size == 0) { */
+/*     entry->first_bucket = new_bucket; */
+/*     entry->last_bucket = new_bucket; */
 
-// if there is a collision
-} else {
-// get last bucket
-bucket_t *last = entry->last_bucket;
-// point last bucket's next to new_bucket
-last->next = (struct bucket_t *) new_bucket;
-// point entry's last bucket to new bucket
-entry->last_bucket = new_bucket;
-}
-// increment counters
-entry->size++;
-  hashtable->num_buckets++;
+/*     // if there is a collision */
+/*   } else { */
+/*     // get last bucket */
+/*     bucket_t *last = entry->last_bucket; */
+/*     // point last bucket's next to new_bucket */
+/*     last->next = (struct bucket_t *) new_bucket; */
+/*     // point entry's last bucket to new bucket */
+/*     entry->last_bucket = new_bucket; */
+/*   } */
+/*   // increment counters */
+/*   entry->size++; */
+/*   hashtable->num_buckets++; */
 
-  // print status messages
-  if (hashtable->enable_feedback) printf("Hashtable insertion successful: pair (%s, %s) inserted\n", key, value);
+/*   // print status messages */
+/*   if (hashtable->enable_feedback) printf("Hashtable insertion successful: pair (%s, %s) inserted\n", key, value); */
   
-  // check if hashtable needs resizing
-  if(hashtable->num_buckets >= hashtable->size * hashtable->max_load_factor) resize_ht(hashtable, hashtable->size*2);
-}
+/*   // check if hashtable needs resizing */
+/*   if(hashtable->num_buckets >= hashtable->size * hashtable->max_load_factor) resize_ht(hashtable, hashtable->size*2); */
+/* } */
 
-// retrieve value given the key
-char *retrieve_ht(hashtable_t *hashtable, char *key) {
+/* // retrieve value given the key */
+/* char *retrieve_ht(hashtable_t *hashtable, char *key) { */
 
-  // get hash value of key
-  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
-  // get index from hash
-  int i, index = hash % hashtable->size;
-  // get entry in index position
-  entry_t *entry = &hashtable->entries[index];
-  // get first bucket
-  bucket_t *current_bucket = entry->first_bucket;
-  // search for key
-  for(i=0;i<entry->size;i++) {
-    // if keys match, return value
-    if(strcmp(current_bucket->key, key) == 0) {
+/*   // get hash value of key */
+/*   uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key)); */
+/*   // get index from hash */
+/*   int i, index = hash % hashtable->size; */
+/*   // get entry in index position */
+/*   entry_t *entry = &hashtable->entries[index]; */
+/*   // get first bucket */
+/*   bucket_t *current_bucket = entry->first_bucket; */
+/*   // search for key */
+/*   for(i=0;i<entry->size;i++) { */
+/*     // if keys match, return value */
+/*     if(strcmp(current_bucket->key, key) == 0) { */
 
-      // print status messages
-      if (hashtable->enable_feedback) printf("Hashtable retrieval successful: value %s for key %s retrived\n", current_bucket->value, key);
+/*       // print status messages */
+/*       if (hashtable->enable_feedback) printf("Hashtable retrieval successful: value %s for key %s retrived\n", current_bucket->value, key); */
       
-      return current_bucket->value;
-    }
-    // place next bucket in current_bucket
-    current_bucket = (bucket_t *) current_bucket->next;
-  }
+/*       return current_bucket->value; */
+/*     } */
+/*     // place next bucket in current_bucket */
+/*     current_bucket = (bucket_t *) current_bucket->next; */
+/*   } */
   
-  // print status messages
-  if (hashtable->enable_feedback) printf("Hashtable retrieval failed: no value for key %s\n", key);
+/*   // print status messages */
+/*   if (hashtable->enable_feedback) printf("Hashtable retrieval failed: no value for key %s\n", key); */
   
-  return NULL;
-}
+/*   return NULL; */
+/* } */
 
-// remove value given the key and return it
-char *remove_ht(hashtable_t *hashtable, char *key) {
+/* // remove value given the key and return it */
+/* char *remove_ht(hashtable_t *hashtable, char *key) { */
 
-  // get hash value of key
-  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
-  // get index from hash
-  int i, index = hash % hashtable->size;
-  // get entry in index position
-  entry_t *entry = &hashtable->entries[index];
-  // get first bucket
-  bucket_t *current_bucket = entry->first_bucket;
-  // variable that holds previous bucket
-  bucket_t *previous_bucket = entry->first_bucket;
-  // search for key
-  for(i=0;i<entry->size;i++) {
-    // if keys match
-    if(strcmp(current_bucket->key, key) == 0) {
-      // store value
-      char* value = current_bucket->value;
+/*   // get hash value of key */
+/*   uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key)); */
+/*   // get index from hash */
+/*   int i, index = hash % hashtable->size; */
+/*   // get entry in index position */
+/*   entry_t *entry = &hashtable->entries[index]; */
+/*   // get first bucket */
+/*   bucket_t *current_bucket = entry->first_bucket; */
+/*   // variable that holds previous bucket */
+/*   bucket_t *previous_bucket = entry->first_bucket; */
+/*   // search for key */
+/*   for(i=0;i<entry->size;i++) { */
+/*     // if keys match */
+/*     if(strcmp(current_bucket->key, key) == 0) { */
+/*       // store value */
+/*       char* value = current_bucket->value; */
 
-      // update entry pointers and next bucket pointer
+/*       // update entry pointers and next bucket pointer */
 
-      // entry only has one bucket
-      if(entry->size == 1) {
-        entry->first_bucket = NULL;
-        entry->last_bucket = NULL;
-      }
+/*       // entry only has one bucket */
+/*       if(entry->size == 1) { */
+/*         entry->first_bucket = NULL; */
+/*         entry->last_bucket = NULL; */
+/*       } */
 
-      // entry has more than one bucket
-      else {
-        // removing first bucket, set first bucket to next bucket
-        if(i == 0) entry->first_bucket = (bucket_t *) current_bucket->next;
-        // removing last bucket
-        if(i == entry->size-1) {
-          entry->last_bucket = (bucket_t *) previous_bucket;
-          previous_bucket->next = NULL;
-        }
-        // removing bucket that isn't first or last bucket, , update pointer to next bucket
-        if(i != 0 && i != entry->size-1) previous_bucket->next = current_bucket->next;
-      }
+/*       // entry has more than one bucket */
+/*       else { */
+/*         // removing first bucket, set first bucket to next bucket */
+/*         if(i == 0) entry->first_bucket = (bucket_t *) current_bucket->next; */
+/*         // removing last bucket */
+/*         if(i == entry->size-1) { */
+/*           entry->last_bucket = (bucket_t *) previous_bucket; */
+/*           previous_bucket->next = NULL; */
+/*         } */
+/*         // removing bucket that isn't first or last bucket, , update pointer to next bucket */
+/*         if(i != 0 && i != entry->size-1) previous_bucket->next = current_bucket->next; */
+/*       } */
 
-      // free current bucket
-      free(current_bucket);
-      // decrement counters
-      entry->size--;
-      hashtable->num_buckets--;
+/*       // free current bucket */
+/*       free(current_bucket); */
+/*       // decrement counters */
+/*       entry->size--; */
+/*       hashtable->num_buckets--; */
 
-      // print status messages
-      if (hashtable->enable_feedback) printf("Hashtable removal successful: value %s for key %s removed\n", value, key);
+/*       // print status messages */
+/*       if (hashtable->enable_feedback) printf("Hashtable removal successful: value %s for key %s removed\n", value, key); */
 
-      // check if hashtable needs resizing
-      if(hashtable->num_buckets <= hashtable->size * hashtable->min_load_factor) {
-        // resize hashtable
-        resize_ht(hashtable, hashtable->size / 2);
-      }
+/*       // check if hashtable needs resizing */
+/*       if(hashtable->num_buckets <= hashtable->size * hashtable->min_load_factor) { */
+/*         // resize hashtable */
+/*         resize_ht(hashtable, hashtable->size / 2); */
+/*       } */
       
-      // return value;
-      return value;
-    }
-    // place next bucket in current_bucket
-    current_bucket = (bucket_t *) current_bucket->next;
-    if(i!=0) previous_bucket = (bucket_t *) previous_bucket->next;
-  }
+/*       // return value; */
+/*       return value; */
+/*     } */
+/*     // place next bucket in current_bucket */
+/*     current_bucket = (bucket_t *) current_bucket->next; */
+/*     if(i!=0) previous_bucket = (bucket_t *) previous_bucket->next; */
+/*   } */
 
-  // print status messages
-  if (hashtable->enable_feedback) printf("Hashtable removal failed: no value for key %s\n", key);
+/*   // print status messages */
+/*   if (hashtable->enable_feedback) printf("Hashtable removal failed: no value for key %s\n", key); */
   
-  return NULL;
-}
+/*   return NULL; */
+/* } */
 
-// resize hashtable
-void resize_ht(hashtable_t *hashtable, int size) {
+/* // resize hashtable */
+/* void resize_ht(hashtable_t *hashtable, int size) { */
 
-  int i, j;
+/*   int i, j; */
 
-  // get old size
-  int old_size = hashtable->size;
+/*   // get old size */
+/*   int old_size = hashtable->size; */
 
-  // create new entry table
-  entry_t *new_entries = malloc(size * sizeof(entry_t));
+/*   // create new entry table */
+/*   entry_t *new_entries = malloc(size * sizeof(entry_t)); */
 
-  // old entry table
-  entry_t *old_entries = hashtable->entries;
+/*   // old entry table */
+/*   entry_t *old_entries = hashtable->entries; */
 
-  // initialize entries
-  for(i=0;i<size;i++) {
-    new_entries[i].size = 0;
-    new_entries[i].first_bucket = (bucket_t *) NULL;
-    new_entries[i].last_bucket = (bucket_t *) NULL;
-  }
+/*   // initialize entries */
+/*   for(i=0;i<size;i++) { */
+/*     new_entries[i].size = 0; */
+/*     new_entries[i].first_bucket = (bucket_t *) NULL; */
+/*     new_entries[i].last_bucket = (bucket_t *) NULL; */
+/*   } */
 
-  // change hashtable variables
-  hashtable->size = size;
-  hashtable->entries = new_entries;
-  hashtable->num_buckets = 0;
+/*   // change hashtable variables */
+/*   hashtable->size = size; */
+/*   hashtable->entries = new_entries; */
+/*   hashtable->num_buckets = 0; */
 
-  // temporary variables
-  entry_t current_entry;
-  bucket_t *current_bucket;
+/*   // temporary variables */
+/*   entry_t current_entry; */
+/*   bucket_t *current_bucket; */
 
-  bool enable_feedback = hashtable->enable_feedback;
-  // temporarily disable feedback
-  hashtable->enable_feedback = false;
+/*   bool enable_feedback = hashtable->enable_feedback; */
+/*   // temporarily disable feedback */
+/*   hashtable->enable_feedback = false; */
 
-  // re-hash all buckets to new
-  // for each entry
-  for(i=0;i<old_size;i++) {
+/*   // re-hash all buckets to new */
+/*   // for each entry */
+/*   for(i=0;i<old_size;i++) { */
 
-    // get entry from entry list
-    current_entry = old_entries[i];
-    // get first bucket
-    current_bucket = current_entry.first_bucket;
-    // for each bucket in entry
-    for(j=0;j<current_entry.size;j++) {
-      // insert (key, value) pair in new hashtable
-      insert_ht(hashtable, (char *) current_bucket->key, (char *) current_bucket->value);
-      // iterate to next bucket
-      current_bucket = (bucket_t *) current_bucket->next;
-    }
-  }
+/*     // get entry from entry list */
+/*     current_entry = old_entries[i]; */
+/*     // get first bucket */
+/*     current_bucket = current_entry.first_bucket; */
+/*     // for each bucket in entry */
+/*     for(j=0;j<current_entry.size;j++) { */
+/*       // insert (key, value) pair in new hashtable */
+/*       insert_ht(hashtable, (char *) current_bucket->key, (char *) current_bucket->value); */
+/*       // iterate to next bucket */
+/*       current_bucket = (bucket_t *) current_bucket->next; */
+/*     } */
+/*   } */
 
-  // deallocate old entry list
-  deallocate_entries(old_entries, old_size);
+/*   // deallocate old entry list */
+/*   deallocate_entries(old_entries, old_size); */
   
-  // restore feedback
-  hashtable->enable_feedback = enable_feedback;
-  // print status messages
-  if (hashtable->enable_feedback) {
-    printf("Hashtable successfully resized: from size %d to size %d\n", old_size, size);
-  }
-}
-*/
+/*   // restore feedback */
+/*   hashtable->enable_feedback = enable_feedback; */
+/*   // print status messages */
+/*   if (hashtable->enable_feedback) { */
+/*     printf("Hashtable successfully resized: from size %d to size %d\n", old_size, size); */
+/*   } */
+/* } */
 
 // INFORMATIVE FUNCTIONS DEFINITIONS
 
@@ -354,24 +351,23 @@ int delete_buckets(bucket_t* bucket) {
   return freed_buckets;
 }
 
-/*
-// check if key exists
-bool check_key(hashtable_t *hashtable, char *key) {
+/* // check if key exists */
+/* bool check_key(hashtable_t *hashtable, char *key) { */
 
-bool enable_feedback = hashtable->enable_feedback;
-// temporarily disable feedback
-hashtable->enable_feedback = false;
+/*   bool enable_feedback = hashtable->enable_feedback; */
+/*   // temporarily disable feedback */
+/*   hashtable->enable_feedback = false; */
   
-// get value for key
-char *value = retrieve_ht(hashtable, key);
+/*   // get value for key */
+/*   char *value = retrieve_ht(hashtable, key); */
 
-// restore feedback
-hashtable->enable_feedback = enable_feedback;
+/*   // restore feedback */
+/*   hashtable->enable_feedback = enable_feedback; */
   
-if (value == NULL) return false;
-return true;
-}
-*/
+/*   if (value == NULL) return false; */
+/*   return true; */
+/* } */
+
 // HASH FUNCTIONS DEFINITIONS
 
 uint32_t jenkins_one_at_a_time_hash(char *key, size_t len) {
