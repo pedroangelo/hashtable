@@ -35,7 +35,7 @@ typedef struct _hashtable_t {
 // MAIN FUNCTIONS DECLARATIONS
 hashtable_t* create_ht(int size, float min_load_factor, float max_load_factor, bool enable_feedback); // corrected
 void delete_ht(hashtable_t* hashtable); // corrected
-void insert_ht(hashtable_t* hashtable, char* key, char* value);
+void insert_ht(hashtable_t* hashtable, char* key, char* value); // working, need revision
 /* char* remove_ht(hashtable_t* hashtable, char* key); */
 void resize_ht(hashtable_t* hashtable, int size);
 char* retrieve_ht(hashtable_t* hashtable, char* key);

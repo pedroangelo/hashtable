@@ -72,10 +72,9 @@ void insert_ht(hashtable_t* hashtable, char* key, char* value) {
   // get index from hash
   int index = hash % hashtable->size;
   // get entry in index position
-  // WHY NOT CURRENT_BUCKET, BUT INSTEAD HASHTABLE->ENTRIES[INDEX]?
   bucket_t* current_bucket = hashtable->entries[index];
   // if there is no bucket in entry
-  if(hashtable->entries[index] == NULL) {
+  if(current_bucket == NULL) {
     // place pointer to new bucket into appropriate entry position
     hashtable->entries[index] = new_bucket;
 
@@ -84,7 +83,7 @@ void insert_ht(hashtable_t* hashtable, char* key, char* value) {
     // get last bucket
     while(current_bucket->next != NULL) current_bucket = (bucket_t*) current_bucket->next;
     // point last bucket's next to new_bucket
-    current_bucket->next = (struct bucket_t *) new_bucket;
+    current_bucket->next = (struct bucket_t*) new_bucket;
   }
   // increment counters
   hashtable->num_buckets++;
