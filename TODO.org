@@ -7,7 +7,9 @@ List of tasks to improve hashtable
 - test with valgrind again, some errors remained when downsizing
 - add verification of inputs
   - hashtable size must be larger than 1
+  - min_load_factor = -1 means never downsize
   - min_load_factor must be lesser than max_load_factor
+  - when using OA mode, max_load_factor must be equal or lesser than 1
 - change hash function to a simpler one
 - check c coding conventions and style, and update
 - implement different ways to handle colisions:
