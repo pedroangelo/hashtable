@@ -3,9 +3,8 @@
 
 int main(int argc, char *argv[]) {
   char *alphabet = "abcdefghijklmnopqrstuvwxyz";
-	hashtable_t *hashtable = create_ht(10, 0.1, 0.7, true);
+	hashtable_t *hashtable = create_ht(10, 0.1, 10, true);
   statistics_ht(hashtable);
-  snapshot_ht(hashtable);
   insert_ht(hashtable, "a", "a");
   insert_ht(hashtable, "a", "a");
 	insert_ht(hashtable, "b", "b");
@@ -15,6 +14,7 @@ int main(int argc, char *argv[]) {
   insert_ht(hashtable, "f", "f");
 	insert_ht(hashtable, "g", "g");
   insert_ht(hashtable, "h", "alternative");
+  printf("%s", retrieve_ht(hashtable, "g"));
   statistics_ht(hashtable);
   snapshot_ht(hashtable);
   delete_ht(hashtable);
