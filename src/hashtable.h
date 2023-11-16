@@ -36,7 +36,7 @@ typedef struct _hashtable_t {
 hashtable_t* create_ht(int size, float min_load_factor, float max_load_factor, bool enable_feedback);
 void delete_ht(hashtable_t* hashtable);
 void insert_ht(hashtable_t* hashtable, char* key, char* value);
-/* char* remove_ht(hashtable_t* hashtable, char* key); */
+char* remove_ht(hashtable_t* hashtable, char* key);
 void resize_ht(hashtable_t* hashtable, int size);
 char* retrieve_ht(hashtable_t* hashtable, char* key);
 
