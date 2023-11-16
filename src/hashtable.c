@@ -95,35 +95,6 @@ void insert_ht(hashtable_t* hashtable, char* key, char* value) {
   if(hashtable->num_buckets >= hashtable->size * hashtable->max_load_factor) resize_ht(hashtable, hashtable->size*2);
 }
 
-// retrieve value according to a given key
-char* retrieve_ht(hashtable_t* hashtable, char* key) {
-
-  int i;
-  // get hash value of key
-  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
-  // get index from hash
-  int index = hash % hashtable->size;
-  // get entry in index position
-  bucket_t* current_bucket = hashtable->entries[index];
-  
-  // search for key
-  while(current_bucket != NULL) {
-    // if keys match, return value
-    if(strcmp(current_bucket->key, key) == 0) {
-      // print status messages
-      if (hashtable->enable_feedback) printf("Hashtable retrieval successful: value %s for key %s retrived\n", current_bucket->value, key);
-      return current_bucket->value;
-    }
-    // place next bucket in current_bucket
-    current_bucket = (bucket_t*) current_bucket->next;
-  }
-  
-  // print status messages
-  if (hashtable->enable_feedback) printf("Hashtable retrieval failed: no value for key %s\n", key);
-  
-  return NULL;
-}
-
 // resize hashtable by creating a new entry with desired size
 void resize_ht(hashtable_t* hashtable, int size) {
 
@@ -178,75 +149,102 @@ void resize_ht(hashtable_t* hashtable, int size) {
   }
 }
 
-/* // remove value given the key and return it */
-/* char* remove_ht(hashtable_t* hashtable, char* key) { */
+// retrieve value according to a given key
+char* retrieve_ht(hashtable_t* hashtable, char* key) {
 
-/*   // get hash value of key */
-/*   uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key)); */
-/*   int i = 0; */
-/*   // get index from hash */
-/*   int index = hash % hashtable->size; */
-/*   // get entry in index position */
-/*   bucket_t* current_bucket = hashtable->entries[index]; */
-/*   // variable that holds previous bucket */
-/*   bucket_t* previous_bucket = current_bucket; */
-/*   // search for key */
-/*   while(current_bucket != NULL) { */
-/*     // if keys match */
-/*     if(strcmp(current_bucket->key, key) == 0) { */
-/*       // store value */
-/*       char* value = current_bucket->value; */
-
-/*       // update entry pointers and next bucket pointer */
-
-/*       // entry only has one bucket */
-/*       if(entry->size == 1) { */
-/*         entry->first_bucket = NULL; */
-/*         entry->last_bucket = NULL; */
-/*       } */
-
-/*       // entry has more than one bucket */
-/*       else { */
-/*         // removing first bucket, set first bucket to next bucket */
-/*         if(i == 0) entry->first_bucket = (bucket_t *) current_bucket->next; */
-/*         // removing last bucket */
-/*         if(i == entry->size-1) { */
-/*           entry->last_bucket = (bucket_t *) previous_bucket; */
-/*           previous_bucket->next = NULL; */
-/*         } */
-/*         // removing bucket that isn't first or last bucket, , update pointer to next bucket */
-/*         if(i != 0 && i != entry->size-1) previous_bucket->next = current_bucket->next; */
-/*       } */
-
-/*       // free current bucket */
-/*       free(current_bucket); */
-/*       // decrement counters */
-/*       entry->size--; */
-/*       hashtable->num_buckets--; */
-
-/*       // print status messages */
-/*       if (hashtable->enable_feedback) printf("Hashtable removal successful: value %s for key %s removed\n", value, key); */
-
-/*       // check if hashtable needs resizing */
-/*       if(hashtable->num_buckets <= hashtable->size * hashtable->min_load_factor) { */
-/*         // resize hashtable */
-/*         resize_ht(hashtable, hashtable->size / 2); */
-/*       } */
-      
-/*       // return value; */
-/*       return value; */
-/*     } */
-/*     // place next bucket in current_bucket */
-/*     current_bucket = (bucket_t *) current_bucket->next; */
-/*     if(i!=0) previous_bucket = (bucket_t *) previous_bucket->next; */
-/*     i++; */
-/*   } */
-
-/*   // print status messages */
-/*   if (hashtable->enable_feedback) printf("Hashtable removal failed: no value for key %s\n", key); */
+  int i;
+  // get hash value of key
+  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
+  // get index from hash
+  int index = hash % hashtable->size;
+  // get entry in index position
+  bucket_t* current_bucket = hashtable->entries[index];
   
-/*   return NULL; */
-/* } */
+  // search for key
+  while(current_bucket != NULL) {
+    // if keys match, return value
+    if(strcmp(current_bucket->key, key) == 0) {
+      // print status messages
+      if (hashtable->enable_feedback) printf("Hashtable retrieval successful: value %s for key %s retrived\n", current_bucket->value, key);
+      return current_bucket->value;
+    }
+    // place next bucket in current_bucket
+    current_bucket = (bucket_t*) current_bucket->next;
+  }
+  
+  // print status messages
+  if (hashtable->enable_feedback) printf("Hashtable retrieval failed: no value for key %s\n", key);
+  
+  return NULL;
+}
+
+// remove value associated to given key in the hashtable, and return it
+char* remove_ht(hashtable_t* hashtable, char* key) {
+
+  int i = 0;
+  
+  // get hash value of key
+  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
+  // get index from hash
+  int index = hash % hashtable->size;
+  // get entry in index position
+  bucket_t* current_bucket = hashtable->entries[index];
+  // variable that holds previous bucket
+  bucket_t* previous_bucket = current_bucket;
+  
+  // search for key
+  while(current_bucket != NULL) {
+    // if keys match
+    if(strcmp(current_bucket->key, key) == 0) {
+      // store value
+      char* value = current_bucket->value;
+
+      // update bucket next pointers
+
+      // if removed bucket is the first bucket
+      if(i == 0) {
+        // update entry position with pointer to next bucket
+        hashtable->entries[index] = (bucket_t*) current_bucket->next;
+      }
+      
+      // if removed bucket is not the first bucket
+      else {
+        // update previous bucket next to current_bucket next
+        previous_bucket->next = current_bucket->next;
+      }
+      // update entry pointers and next bucket pointer
+
+      // print status messages
+      if (hashtable->enable_feedback) printf("Hashtable removal successful: value %s for key %s removed\n", value, key);
+      
+      // free current bucket
+      free(current_bucket->key);
+      free(current_bucket->value);
+      free(current_bucket);
+      // decrement counters
+      hashtable->num_buckets--;
+
+      // check if hashtable needs resizing
+      if(hashtable->num_buckets <= hashtable->size * hashtable->min_load_factor) {
+        // resize hashtable
+        resize_ht(hashtable, hashtable->size / 2);
+      }
+      
+      // return value;
+      return value;
+    }
+    
+    // place next bucket in current_bucket
+    current_bucket = (bucket_t *) current_bucket->next;
+    if(i!=0) previous_bucket = (bucket_t *) previous_bucket->next;
+    i++;
+  }
+
+  // print status messages
+  if (hashtable->enable_feedback) printf("Hashtable removal failed: no value for key %s\n", key);
+  
+  return NULL;
+}
 
 // INFORMATIVE FUNCTIONS DEFINITIONS
 
@@ -285,12 +283,12 @@ void snapshot_ht(hashtable_t* hashtable) {
 // create new bucket, allocating free space to it
 bucket_t* create_bucket(char* key, char* value) {
 
-    // allocate new bucket and set values
- bucket_t* new_bucket = malloc(sizeof(bucket_t));
- new_bucket->key = strdup(key);
- new_bucket->value = strdup(value);
- new_bucket->next = NULL;
- return new_bucket;
+  // allocate new bucket and set values
+  bucket_t* new_bucket = malloc(sizeof(bucket_t));
+  new_bucket->key = strdup(key);
+  new_bucket->value = strdup(value);
+  new_bucket->next = NULL;
+  return new_bucket;
 }
 
 // deallocate all entries and free used space
