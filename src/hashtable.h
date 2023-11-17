@@ -33,22 +33,22 @@ typedef struct _hashtable_t {
 } hashtable_t;
 
 // MAIN FUNCTIONS DECLARATIONS
-hashtable_t* create_ht(int size, float min_load_factor, float max_load_factor, bool enable_feedback);
-void delete_ht(hashtable_t* hashtable);
-void insert_ht(hashtable_t* hashtable, char* key, char* value);
-char* remove_ht(hashtable_t* hashtable, char* key);
-void resize_ht(hashtable_t* hashtable, int size);
-char* retrieve_ht(hashtable_t* hashtable, char* key);
+hashtable_t* ht_create(int size, float min_load_factor, float max_load_factor, bool enable_feedback);
+void ht_delete(hashtable_t* hashtable);
+void ht_insert(hashtable_t* hashtable, char* key, char* value);
+char* ht_remove(hashtable_t* hashtable, char* key);
+void ht_resize(hashtable_t* hashtable, int size);
+char* ht_retrieve(hashtable_t* hashtable, char* key);
 
 // INFORMATIVE FUNCTIONS DECLARATIONS
-void statistics_ht(hashtable_t* hashtable);
-void snapshot_ht(hashtable_t* hashtable);
+void ht_snapshot(hashtable_t* hashtable);
+void ht_statistics(hashtable_t* hashtable);
 
 // AUXILIARY FUNCTIONS DECLARATIONS
-static int ht_calculate_index(hashtable_t* hashtable, char* key);
+static int calculate_index(hashtable_t* hashtable, char* key);
+static bool check_key(hashtable_t* hashtable, char* key);
 static bucket_t* create_bucket(char* key, char* value);
 static int deallocate_all_entries(bucket_t** entries, int size);
-static bool check_key(hashtable_t* hashtable, char* key);
 static int deallocate_buckets(bucket_t* buckets);
 
 // HASH FUNCTIONS DECLARATIONS

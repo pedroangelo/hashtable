@@ -19,7 +19,7 @@
 // MAIN FUNCTIONS DEFINITIONS
 
 // create a empty hashtable and return its address
-hashtable_t* create_ht(int size, float min_load_factor, float max_load_factor, bool enable_feedback) {
+hashtable_t* ht_create(int size, float min_load_factor, float max_load_factor, bool enable_feedback) {
 
   int i;
   // allocate space for the hashtable
@@ -43,7 +43,7 @@ hashtable_t* create_ht(int size, float min_load_factor, float max_load_factor, b
 }
 
 // deletes the hashtable, by deallocating the space it uses
-void delete_ht(hashtable_t* hashtable) {
+void ht_delete(hashtable_t* hashtable) {
 
   // free entries
   int freed_buckets = deallocate_all_entries(hashtable->entries, hashtable->size);
@@ -56,7 +56,7 @@ void delete_ht(hashtable_t* hashtable) {
 }
 
 // insert key value pair into the appropriate entry position in the hashtable
-void insert_ht(hashtable_t* hashtable, char* key, char* value) {
+void ht_insert(hashtable_t* hashtable, char* key, char* value) {
 
   // check if key already exists, if so do nothing
   if(check_key(hashtable, key) == true) {
@@ -68,7 +68,7 @@ void insert_ht(hashtable_t* hashtable, char* key, char* value) {
   // create new bucket holding the key value pair, store pointer in new_bucket
   bucket_t* new_bucket = create_bucket(key, value);
   // calculate index from hashed key
-  int index = ht_calculate_index(hashtable, key);
+  int index = calculate_index(hashtable, key);
   // get pointer entry in index position
   bucket_t* current_bucket = hashtable->entries[index];
   // if there is no bucket in entry
@@ -90,16 +90,16 @@ void insert_ht(hashtable_t* hashtable, char* key, char* value) {
   if(hashtable->enable_feedback) printf("Hashtable insertion successful: pair (%s, %s) inserted into position %d\n", key, value, index);
   
   // check if hashtable needs resizing
-  if(hashtable->num_buckets >= hashtable->size * hashtable->max_load_factor) resize_ht(hashtable, hashtable->size*2);
+  if(hashtable->num_buckets >= hashtable->size * hashtable->max_load_factor) ht_resize(hashtable, hashtable->size*2);
 }
 
 // remove value associated to given key in the hashtable, and return it
-char* remove_ht(hashtable_t* hashtable, char* key) {
+char* ht_remove(hashtable_t* hashtable, char* key) {
 
   int i = 0;
 
   // calculate index from hashed key
-  int index = ht_calculate_index(hashtable, key);
+  int index = calculate_index(hashtable, key);
   // get entry in index position
   bucket_t* current_bucket = hashtable->entries[index];
   // variable that holds previous bucket
@@ -140,7 +140,7 @@ char* remove_ht(hashtable_t* hashtable, char* key) {
       // check if hashtable needs resizing
       if(hashtable->num_buckets <= hashtable->size * hashtable->min_load_factor) {
         // resize hashtable
-        resize_ht(hashtable, hashtable->size / 2);
+        ht_resize(hashtable, hashtable->size / 2);
       }
       
       // return value;
@@ -160,7 +160,7 @@ char* remove_ht(hashtable_t* hashtable, char* key) {
 }
 
 // resize hashtable by creating a new entry with desired size
-void resize_ht(hashtable_t* hashtable, int size) {
+void ht_resize(hashtable_t* hashtable, int size) {
 
   int i, j;
   // get old size
@@ -196,7 +196,7 @@ void resize_ht(hashtable_t* hashtable, int size) {
     // for each bucket in sequence
     while(current_bucket != NULL) {
       // insert (key, value) pair in new hashtable
-      insert_ht(hashtable, (char*) current_bucket->key, (char*) current_bucket->value);
+      ht_insert(hashtable, (char*) current_bucket->key, (char*) current_bucket->value);
       // iterate to next bucket
       current_bucket = (bucket_t *) current_bucket->next;
     }
@@ -214,11 +214,11 @@ void resize_ht(hashtable_t* hashtable, int size) {
 }
 
 // retrieve value according to a given key
-char* retrieve_ht(hashtable_t* hashtable, char* key) {
+char* ht_retrieve(hashtable_t* hashtable, char* key) {
 
   int i;
   // calculate index from hashed key
-  int index = ht_calculate_index(hashtable, key);
+  int index = calculate_index(hashtable, key);
   // get entry in index position
   bucket_t* current_bucket = hashtable->entries[index];
   
@@ -242,16 +242,8 @@ char* retrieve_ht(hashtable_t* hashtable, char* key) {
 
 // INFORMATIVE FUNCTIONS DEFINITIONS
 
-// print statistics from hashtable
-void statistics_ht(hashtable_t* hashtable) {
-
-  printf("Printing hashtable statistics\n");
-  printf("Load limits: %.0f%% min / %.0f%% max\n", (100 * hashtable->min_load_factor), (100 * hashtable->max_load_factor));
-  printf("Buckets: %d used / %d total (%.0f%% current load)\n", hashtable->num_buckets, hashtable->size, 100 * (double) ((double) hashtable->num_buckets / hashtable->size));
-}
-
 // print snapshot of hashtable
-void snapshot_ht(hashtable_t* hashtable) {
+void ht_snapshot(hashtable_t* hashtable) {
 
   int i, j;
   int size = hashtable->size;
@@ -270,6 +262,14 @@ void snapshot_ht(hashtable_t* hashtable) {
     }
     printf("null\n");
   }
+}
+
+// print statistics from hashtable
+void ht_statistics(hashtable_t* hashtable) {
+
+  printf("Printing hashtable statistics\n");
+  printf("Load limits: %.0f%% min / %.0f%% max\n", (100 * hashtable->min_load_factor), (100 * hashtable->max_load_factor));
+  printf("Buckets: %d used / %d total (%.0f%% current load)\n", hashtable->num_buckets, hashtable->size, 100 * (double) ((double) hashtable->num_buckets / hashtable->size));
 }
 
 // AUXILIARY FUNCTIONS DEFINITIONS
@@ -334,7 +334,7 @@ bool check_key(hashtable_t* hashtable, char* key) {
   hashtable->enable_feedback = false;
   
   // get value for key
-  char* value = retrieve_ht(hashtable, key);
+  char* value = ht_retrieve(hashtable, key);
 
   // restore feedback
   hashtable->enable_feedback = enable_feedback;
@@ -344,7 +344,7 @@ bool check_key(hashtable_t* hashtable, char* key) {
 }
 
 // calculate index from hashed key
-int ht_calculate_index(hashtable_t* hashtable, char* key) {
+int calculate_index(hashtable_t* hashtable, char* key) {
   // get hash value of key
   uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
   // get index from hash
