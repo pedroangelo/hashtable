@@ -67,10 +67,8 @@ void insert_ht(hashtable_t* hashtable, char* key, char* value) {
 
   // create new bucket holding the key value pair, store pointer in new_bucket
   bucket_t* new_bucket = create_bucket(key, value);
-  // get hash value of key
-  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
-  // get index from hash
-  int index = hash % hashtable->size;
+  // calculate index from hashed key
+  int index = ht_calculate_index(hashtable, key);
   // get pointer entry in index position
   bucket_t* current_bucket = hashtable->entries[index];
   // if there is no bucket in entry
@@ -99,11 +97,9 @@ void insert_ht(hashtable_t* hashtable, char* key, char* value) {
 char* remove_ht(hashtable_t* hashtable, char* key) {
 
   int i = 0;
-  
-  // get hash value of key
-  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
-  // get index from hash
-  int index = hash % hashtable->size;
+
+  // calculate index from hashed key
+  int index = ht_calculate_index(hashtable, key);
   // get entry in index position
   bucket_t* current_bucket = hashtable->entries[index];
   // variable that holds previous bucket
@@ -221,10 +217,8 @@ void resize_ht(hashtable_t* hashtable, int size) {
 char* retrieve_ht(hashtable_t* hashtable, char* key) {
 
   int i;
-  // get hash value of key
-  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
-  // get index from hash
-  int index = hash % hashtable->size;
+  // calculate index from hashed key
+  int index = ht_calculate_index(hashtable, key);
   // get entry in index position
   bucket_t* current_bucket = hashtable->entries[index];
   
@@ -347,6 +341,14 @@ bool check_key(hashtable_t* hashtable, char* key) {
   
   if (value == NULL) return false;
   return true;
+}
+
+// calculate index from hashed key
+int ht_calculate_index(hashtable_t* hashtable, char* key) {
+  // get hash value of key
+  uint32_t hash = jenkins_one_at_a_time_hash(key, strlen(key));
+  // get index from hash
+  return hash % hashtable->size;
 }
 
 // HASH FUNCTIONS DEFINITIONS

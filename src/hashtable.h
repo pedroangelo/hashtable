@@ -45,6 +45,7 @@ void statistics_ht(hashtable_t* hashtable);
 void snapshot_ht(hashtable_t* hashtable);
 
 // AUXILIARY FUNCTIONS DECLARATIONS
+static int ht_calculate_index(hashtable_t* hashtable, char* key);
 static bucket_t* create_bucket(char* key, char* value);
 static int deallocate_all_entries(bucket_t** entries, int size);
 static bool check_key(hashtable_t* hashtable, char* key);
