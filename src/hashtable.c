@@ -227,7 +227,7 @@ char* ht_retrieve(hashtable_t* hashtable, char* key) {
     // if keys match, return value
     if(strcmp(current_bucket->key, key) == 0) {
       // print status messages
-      if (hashtable->enable_feedback) printf("Hashtable retrieval successful: value %s for key %s retrived\n", current_bucket->value, key);
+      if (hashtable->enable_feedback) printf("Hashtable retrieval successful: value %s for key %s retrieved\n", current_bucket->value, key);
       return current_bucket->value;
     }
     // place next bucket in current_bucket
